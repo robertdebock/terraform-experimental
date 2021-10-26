@@ -1,47 +1,65 @@
+---
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  terraform:
+    name: terraform
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        config:
+          - name: default
+          - name: environment
+          - name: restrictive
+          - name: skipper
+          - name: template
+          - name: repositories
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: terraform init
+        uses: robertdebock/terraform-action@1.1.1
+        with:
+          directory: ./examples/${{ matrix.config.name }}
+      - name: terraform validate
+        uses: robertdebock/terraform-action@1.1.1
+        with:
+          action: validate
+          directory: ./examples/${{ matrix.config.name }}
+      - name: terraform plan
+        uses: robertdebock/terraform-action@1.1.1
+        with:
+          action: plan
+          directory: ./examples/${{ matrix.config.name }}
+      - name: terraform apply
+        uses: robertdebock/terraform-action@1.1.1
+        with:
+          action: apply
+          directory: ./examples/${{ matrix.config.name }}
+        env:
+          TF_CLI_ARGS: "-input=false -auto-approve"
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+      - name: terraform destroy
+        uses: robertdebock/terraform-action@1.1.1
+        with:
+          action: destroy
+          directory: ./examples/${{ matrix.config.name }}
+        env:
+          TF_CLI_ARGS: "-input=false -auto-approve"
+        if: ${{ always() }}
+
+
 name: 'Terraform'
 
 on:
   push:
     branches:
-    - master
+      - master
   pull_request:
-
-jobs:
-  terraform:
-    name: 'Terraform'
-    runs-on: ubuntu-latest
-    environment: production
-
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      run: terraform init
-
-    # Checks that all Terraform configuration files adhere to a canonical format
-    - name: Terraform Format
-      run: terraform fmt -check
-
-    # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: terraform plan
-
-      # On push to master, build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-      run: terraform apply -auto-approve
