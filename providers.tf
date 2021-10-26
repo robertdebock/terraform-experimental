@@ -1,5 +1,1 @@
-provider "github" {
-  token = var.GITHUB_TOKEN
-}
-
-variable "GITHUB_TOKEN" {}
+provider "github" {}

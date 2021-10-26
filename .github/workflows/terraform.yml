@@ -8,8 +8,8 @@ on:
 jobs:
   terraform:
     name: terraform
-    # env:
-    #   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
