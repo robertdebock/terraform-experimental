@@ -54,12 +54,3 @@ jobs:
         env:
           TF_CLI_ARGS: "-input=false -auto-approve"
         if: ${{ always() }}
-
-
-name: 'Terraform'
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
